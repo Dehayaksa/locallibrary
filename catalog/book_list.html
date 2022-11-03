@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+</body>
+</html>
+
+{% extends "base_generic.html" %}
+
+{% block content %}
+    <h1>Book List</h1>
+
+    {% if book_list %}
+    <ul>
+
+      {% for book in book_list %}
+      <li>
+        <a href="{{ book.get_absolute_url }}">{{ book.title }}
+        </a> ({{book.author}})
+      </li>
+      {% endfor %}
+
+    </ul>
+    {% else %}
+      <p>There are no books in the library.</p>
+    {% endif %}
+{% endblock %}
+
+def book_detail_view(request,pk):
+    try:
+        book_id=Book.objects.get(pk=pk)
+    except Book.DoesNotExist:
+        raise Http404("Book does not exist")
+
+    #book_id=get_object_or_404(Book, pk=pk)
+
+    return render(
+        request,
+        'catalog/book_detail.html',
+        context={'book':book_id,}
+    )
+
