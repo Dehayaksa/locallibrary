@@ -1,7 +1,8 @@
 from django.db import models
 from django.urls import reverse
 import uuid
-
+from django.contrib.auth.models import User
+from datetime import date
 # Create your models here.
 
 
@@ -47,6 +48,7 @@ class Book(models.Model):
 
 
 class BookInstance(models.Model):
+    borrower = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4,
                           help_text='Unique ID for this particular book across whole library')
     book = models.ForeignKey('Book', on_delete=models.RESTRICT, null=True)
@@ -68,12 +70,18 @@ class BookInstance(models.Model):
         help_text='Book availability',
     )
 
-
     class Meta:
         ordering = ['due_back']
+        permissions = (("can_mark_returned", "Set book as returned"),)
 
     def __str__(self):
         return f'{self.id} ({self.book.title})'
+
+    def is_overdue(self):
+        if self.due_back and date.today() > self.due_back:
+            return True
+        return False
+
 
 
 class Author(models.Model):
@@ -84,6 +92,7 @@ class Author(models.Model):
 
     class Meta:
         ordering = ['last_name', 'first_name']
+        permissions = (("can_mark_returned", "Set book as returned"),)
 
     def get_absolute_url(self):
         """Returns the url to access a particular author instance."""
