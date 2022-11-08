@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.shortcuts import render
 from .models import Book, Author, BookInstance, Genre
 from django.views import generic
@@ -16,13 +17,15 @@ def index(request):
     num_authors = Author.objects.count()
     num_genre = Genre.objects.count()
     num_books_filter = Book.objects.filter(title__icontains='мир').count()
+    num_visits=request.session.get('num_visits', 0)
+    request.session['num_visits'] = num_visits+1
 
     return render(
         request,
         'index.html',
         context={'num_books': num_books, 'num_instances': num_instances,
                  'num_instances_available': num_instances_available, 'num_authors': num_authors,
-                 'num_genre': num_genre, 'num_books_filter': num_books_filter},
+                 'num_genre': num_genre, 'num_books_filter': num_books_filter, 'num_visits': num_visits},
     )
 
 
@@ -30,6 +33,29 @@ class BookListView(generic.ListView):
     model = Book
     paginate_by = 10
 
+
 class BookDetailView(generic.DetailView):
     model = Book
 
+    def book_detail_view(request, pk):
+        try:
+            book_id = Book.objects.get(pk=pk)
+        except Book.DoesNotExist:
+            raise Http404("Book does not exist")
+
+        return render(
+            request,
+            'catalog/book_detail.html',
+            context={'book': book_id, }
+        )
+
+
+class AuthorListView(generic.ListView):
+    """Generic class-based list view for a list of authors."""
+    model = Author
+    paginate_by = 10
+
+
+class AuthorDetailView(generic.DetailView):
+    """Generic class-based detail view for an author."""
+    model = Author
